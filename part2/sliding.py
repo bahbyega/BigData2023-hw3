@@ -1,4 +1,4 @@
-from pyflink.common import SimpleStringSchema
+from pyflink.common import SimpleStringSchema, Time
 from pyflink.common.typeinfo import Types, RowTypeInfo
 from pyflink.common.watermark_strategy import WatermarkStrategy
 from pyflink.datastream import (
@@ -15,7 +15,11 @@ from pyflink.datastream.connectors.kafka import (
     KafkaRecordSerializationSchema,
 )
 from pyflink.datastream.formats.json import JsonRowDeserializationSchema
-from pyflink.datastream.functions import MapFunction
+from pyflink.datastream.functions import MapFunction, ReduceFunction
+from pyflink.datastream.window import (
+    TumblingProcessingTimeWindows,
+    SlidingProcessingTimeWindows,
+)
 
 
 def run():
@@ -65,7 +69,11 @@ def run():
     )
 
     ds = env.from_source(source, WatermarkStrategy.no_watermarks(), "Kafka Source")
-    ds.map(TemperatureFunction(), Types.STRING()).sink_to(sink)
+    ds.key_by(lambda v: v["device_id"]).window(
+        SlidingProcessingTimeWindows.of(Time.seconds(10), Time.seconds(8))
+    ).reduce(MaxReduceFunction()).map(TemperatureFunction(), Types.STRING()).sink_to(
+        sink
+    )
     env.execute_async("Devices preprocessing")
 
 
@@ -79,6 +87,14 @@ class TemperatureFunction(MapFunction):
                 "execution_time": execution_time,
             }
         )
+
+
+class MaxReduceFunction(ReduceFunction):
+    def reduce(self, v1, v2):
+        if v1.temperature > v2.temperature:
+            return v1
+        else:
+            return v2
 
 
 if __name__ == "__main__":
