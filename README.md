@@ -1,3 +1,17 @@
+# Kafka
+
+Done by Porsev Denis
+
+---
+
+For part 1, 2, 3 solutions check READMEs in related folders:
+
+[Part 1](/part1/README.md)
+
+[Part 2](/part2/README.md)
+
+[Part 3](/part3/README.md)
+
 ### Kafka
 
 
