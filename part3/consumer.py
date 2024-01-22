@@ -1,3 +1,4 @@
+import random
 from kafka import KafkaConsumer
 
 from backoff import backoff
@@ -5,7 +6,11 @@ from backoff import backoff
 
 @backoff(tries=3, sleep=1)
 def message_handler(value) -> None:
-    raise Exception("Connection error")
+    # error imitation
+    if random.randrange(10) % 2 == 0:
+        print(value)
+    else:
+        raise Exception("Error occured, random value condition is false")
 
 
 def create_consumer():
